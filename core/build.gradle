@@ -1,0 +1,29 @@
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+eclipse.project.name = appName + '-core'
+
+dependencies {
+  api "com.badlogicgames.gdx:gdx-ai:$aiVersion"
+  api "com.badlogicgames.gdx:gdx-bullet:$gdxVersion"
+  api "com.badlogicgames.gdx:gdx:$gdxVersion"
+  api "com.github.crykn.guacamole:core:$guacamoleVersion"
+  api "com.github.crykn.guacamole:gdx:$guacamoleVersion"
+  api "com.github.deedywu.gdx-websockets:core:$websocketVersion"
+  api "com.github.deedywu.gdx-websockets:serialization:$websocketSerializationVersion"
+  api "com.github.lyze237:gdx-FlexBox:$flexBoxVersion"
+  api "com.github.satori87.gdx-webrtc:core:$gdxWebRtcVersion"
+  api "com.github.tommyettinger:cringe:$cringeVersion"
+  api "com.github.tommyettinger:crux:$cruxVersion"
+  api "com.github.tommyettinger:gand:$gandVersion"
+  api "com.github.tommyettinger:gdcrux:$gdcruxVersion"
+  api "net.onedaybeard.artemis:artemis-odb-serializer-json-libgdx:$artemisOdbSerializerJsonGdxVersion"
+  api "net.onedaybeard.artemis:artemis-odb-serializer:$artemisOdbSerializerJsonGdxVersion"
+  api "net.onedaybeard.artemis:artemis-odb:$artemisOdbVersion"
+
+  if(enableGraalNative == 'true') {
+    implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"
+  }
+}
+
+jar {
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
