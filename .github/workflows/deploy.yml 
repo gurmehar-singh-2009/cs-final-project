@@ -1,0 +1,72 @@
+name: Build and Deploy Web
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build TeaVM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Build TeaVM JavaScript release
+        run: ./gradlew gdx_teavm_web_js_release_build --stacktrace
+
+      - name: Verify TeaVM output
+        run: |
+          echo "TeaVM output:"
+          find teavm/build/dist/js/release -maxdepth 2 -type f | sort
+
+          if [ ! -f "teavm/build/dist/js/release/index.html" ]; then
+            echo "::error::TeaVM build did not produce index.html"
+            exit 1
+          fi
+
+      - name: Add .nojekyll
+        run: touch teavm/build/dist/js/release/.nojekyll
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: teavm/build/dist/js/release
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

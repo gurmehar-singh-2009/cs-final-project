@@ -19,7 +19,7 @@ dependencies {
   api "net.onedaybeard.artemis:artemis-odb-serializer:$artemisOdbSerializerJsonGdxVersion"
   api "net.onedaybeard.artemis:artemis-odb:$artemisOdbVersion"
 
-  if(enableGraalNative == 'true') {
+  if (enableGraalNative == 'true') {
     implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"
   }
 }
