@@ -4,16 +4,16 @@ on:
   push:
     branches:
       - main
-
   workflow_dispatch:
-
-# Prevent two deployments from running at the same time.
-concurrency:
-  group: github-pages
-  cancel-in-progress: true
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -34,30 +34,39 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
+      - name: Check Java and Gradle
+        run: |
+          java -version
+          ./gradlew --version
+
       - name: Build TeaVM JavaScript release
-        run: ./gradlew gdx_teavm_web_js_release_build --stacktrace
+        run: ./gradlew :teavm:gdx_teavm_web_js_release_build --stacktrace
 
       - name: Verify TeaVM output
         run: |
           OUTPUT_DIR="teavm/build/dist/js/release/webapp"
 
-          echo "Checking TeaVM output at:"
-          echo "$OUTPUT_DIR"
+          echo "Checking: $OUTPUT_DIR"
 
           if [ ! -d "$OUTPUT_DIR" ]; then
             echo "::error::TeaVM output directory does not exist!"
-            echo "::error::Expected: $OUTPUT_DIR"
+            echo
+            echo "Contents of teavm/build:"
+            find teavm/build -maxdepth 5 -type f 2>/dev/null | sort || true
             exit 1
           fi
 
           if [ ! -f "$OUTPUT_DIR/index.html" ]; then
-            echo "::error::TeaVM did not produce index.html!"
-            echo "::error::Contents of output directory:"
+            echo "::error::index.html was not generated!"
+            echo
+            echo "Generated files:"
             find "$OUTPUT_DIR" -maxdepth 3 -type f | sort
             exit 1
           fi
 
-          echo "TeaVM output:"
+          echo "TeaVM build succeeded."
+          echo
+          echo "Generated files:"
           find "$OUTPUT_DIR" -maxdepth 3 -type f | sort
 
       - name: Configure GitHub Pages
@@ -72,10 +81,6 @@ jobs:
     name: Deploy to GitHub Pages
     needs: build
     runs-on: ubuntu-latest
-
-    permissions:
-      pages: write
-      id-token: write
 
     environment:
       name: github-pages
