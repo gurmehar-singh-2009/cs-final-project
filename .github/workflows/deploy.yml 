@@ -1,4 +1,4 @@
-name: Build and Deploy Web
+name: Build and Deploy TeaVM
 
 on:
   push:
@@ -6,6 +6,11 @@ on:
       - main
 
   workflow_dispatch:
+
+# Prevent two deployments from running at the same time.
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -19,15 +24,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Java 17
+      - name: Set up Java 20
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '20'
           cache: gradle
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
 
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
@@ -37,21 +39,34 @@ jobs:
 
       - name: Verify TeaVM output
         run: |
-          echo "TeaVM output:"
-          find teavm/build/dist/js/release -maxdepth 2 -type f | sort
+          OUTPUT_DIR="teavm/build/dist/js/release/webapp"
 
-          if [ ! -f "teavm/build/dist/js/release/index.html" ]; then
-            echo "::error::TeaVM build did not produce index.html"
+          echo "Checking TeaVM output at:"
+          echo "$OUTPUT_DIR"
+
+          if [ ! -d "$OUTPUT_DIR" ]; then
+            echo "::error::TeaVM output directory does not exist!"
+            echo "::error::Expected: $OUTPUT_DIR"
             exit 1
           fi
 
-      - name: Add .nojekyll
-        run: touch teavm/build/dist/js/release/.nojekyll
+          if [ ! -f "$OUTPUT_DIR/index.html" ]; then
+            echo "::error::TeaVM did not produce index.html!"
+            echo "::error::Contents of output directory:"
+            find "$OUTPUT_DIR" -maxdepth 3 -type f | sort
+            exit 1
+          fi
 
-      - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v5
+          echo "TeaVM output:"
+          find "$OUTPUT_DIR" -maxdepth 3 -type f | sort
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
         with:
-          path: teavm/build/dist/js/release
+          path: teavm/build/dist/js/release/webapp
 
   deploy:
     name: Deploy to GitHub Pages
