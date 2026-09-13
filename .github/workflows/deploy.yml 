@@ -6,11 +6,6 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
 concurrency:
   group: github-pages
   cancel-in-progress: true
@@ -19,6 +14,11 @@ jobs:
   build:
     name: Build TeaVM
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
 
     steps:
       - name: Checkout
@@ -52,7 +52,7 @@ jobs:
             echo "::error::TeaVM output directory does not exist!"
             echo
             echo "Contents of teavm/build:"
-            find teavm/build -maxdepth 5 -type f 2>/dev/null | sort || true
+            find teavm/build -maxdepth 8 -print 2>/dev/null | sort || true
             exit 1
           fi
 
@@ -60,14 +60,14 @@ jobs:
             echo "::error::index.html was not generated!"
             echo
             echo "Generated files:"
-            find "$OUTPUT_DIR" -maxdepth 3 -type f | sort
+            find "$OUTPUT_DIR" -maxdepth 5 -type f | sort
             exit 1
           fi
 
           echo "TeaVM build succeeded."
           echo
           echo "Generated files:"
-          find "$OUTPUT_DIR" -maxdepth 3 -type f | sort
+          find "$OUTPUT_DIR" -maxdepth 5 -type f | sort
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -81,6 +81,10 @@ jobs:
     name: Deploy to GitHub Pages
     needs: build
     runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
 
     environment:
       name: github-pages
